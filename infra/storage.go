@@ -1,30 +1,15 @@
-package infrastructure
+package infra
 
 import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"strings"
 )
 
 type Storage struct {
 	client *s3.S3
-}
-
-type FileData struct {
-	Bucket string
-	Key    string
-}
-
-type ContentLengthQuery struct {
-	FileData
-}
-
-type BytesRangeCmd struct {
-	FileData
-	From  int64
-	To    int64
-	Chunk []byte
 }
 
 func NewStorage() (*Storage, error) {
@@ -42,10 +27,12 @@ func NewStorage() (*Storage, error) {
 	return &Storage{client: s3.New(sess)}, nil
 }
 
-func (s *Storage) ContentLength(query *ContentLengthQuery) (int64, error) {
+func (s *Storage) ContentLength(filename string) (int64, error) {
+	bucket, key := s.buckedKeyValues(filename)
+
 	head, err := s.client.HeadObject(&s3.HeadObjectInput{
-		Bucket: aws.String(query.Bucket),
-		Key:    aws.String(query.Key),
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
 	})
 	if err != nil {
 		return 0, err
@@ -54,12 +41,13 @@ func (s *Storage) ContentLength(query *ContentLengthQuery) (int64, error) {
 	return *head.ContentLength, nil
 }
 
-func (s *Storage) BytesRange(cmd *BytesRangeCmd) error {
-	byteRange := fmt.Sprintf("bytes=%v-%v", cmd.From, cmd.To)
+func (s *Storage) ByteRange(filename string, from, to int64, chunk []byte) error {
+	bucket, key := s.buckedKeyValues(filename)
+	byteRange := fmt.Sprintf("bytes=%v-%v", from, to)
 
 	object, err := s.client.GetObject(&s3.GetObjectInput{
-		Bucket: aws.String(cmd.Bucket),
-		Key:    aws.String(cmd.Key),
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
 		Range:  aws.String(byteRange),
 	})
 	if err != nil {
@@ -67,9 +55,16 @@ func (s *Storage) BytesRange(cmd *BytesRangeCmd) error {
 	}
 
 	defer object.Body.Close()
-	if _, err := object.Body.Read(cmd.Chunk); err != nil {
+	if _, err := object.Body.Read(chunk); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (s *Storage) buckedKeyValues(filename string) (string, string) {
+	parts := strings.Split(filename, "/")
+	bucket := parts[0]
+	key := fmt.Sprintf("/%v", strings.Join(parts, "/"))
+	return bucket, key
 }
