@@ -3,8 +3,9 @@ package consumer
 import (
 	"context"
 	"fmt"
-	"github.com/godoylucase/s3-file-stream-reader/producer"
 	"sync"
+
+	"github.com/godoylucase/s3-file-stream-reader/producer"
 )
 
 const (
