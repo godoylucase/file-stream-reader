@@ -79,7 +79,6 @@ func (p *producer) Stream(ctx context.Context, fName string, bytesPerRead int64)
 						stream <- BytesStream{
 							RangeMetadata: rm,
 							Chunk:         chunk,
-							Err:           nil,
 						}
 					case <-ctx.Done():
 						fmt.Printf("cancelled context: %v\n", ctx.Err())

@@ -28,7 +28,7 @@ func NewStorage() (*Storage, error) {
 }
 
 func (s *Storage) ContentLength(filename string) (int64, error) {
-	bucket, key := s.buckedKeyValues(filename)
+	bucket, key := s.bucketKeyValues(filename)
 
 	head, err := s.client.HeadObject(&s3.HeadObjectInput{
 		Bucket: aws.String(bucket),
@@ -42,7 +42,7 @@ func (s *Storage) ContentLength(filename string) (int64, error) {
 }
 
 func (s *Storage) ByteRange(filename string, from, to int64, chunk []byte) error {
-	bucket, key := s.buckedKeyValues(filename)
+	bucket, key := s.bucketKeyValues(filename)
 	byteRange := fmt.Sprintf("bytes=%v-%v", from, to)
 
 	object, err := s.client.GetObject(&s3.GetObjectInput{
@@ -62,7 +62,7 @@ func (s *Storage) ByteRange(filename string, from, to int64, chunk []byte) error
 	return nil
 }
 
-func (s *Storage) buckedKeyValues(filename string) (string, string) {
+func (s *Storage) bucketKeyValues(filename string) (string, string) {
 	parts := strings.Split(filename, "/")
 	bucket := parts[0]
 	key := fmt.Sprintf("/%v", strings.Join(parts, "/"))
