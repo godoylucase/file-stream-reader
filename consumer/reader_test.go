@@ -2,9 +2,10 @@ package consumer
 
 import (
 	"context"
+	"testing"
+
 	"github.com/godoylucase/s3-file-stream-reader/producer"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 var expected = []string{

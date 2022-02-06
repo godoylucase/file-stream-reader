@@ -2,10 +2,13 @@ package infra
 
 import (
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"strings"
 )
 
 type Storage struct {
@@ -13,11 +16,19 @@ type Storage struct {
 }
 
 func NewStorage() (*Storage, error) {
-	sess, err := session.NewSessionWithOptions(session.Options{
-		Config: aws.Config{
-			Region: aws.String("us-east-1"),
-		},
-	})
+	config := aws.Config{
+		Region: aws.String("us-east-1"),
+	}
+
+	ae, ok := os.LookupEnv("AWS_ENDPOINT")
+	if !ok {
+		panic("AWS_ENDPOINT is not set")
+	} else {
+		config.Credentials = credentials.NewStaticCredentials("test", "test", "")
+		config.Endpoint = aws.String(ae)
+	}
+
+	sess, err := session.NewSessionWithOptions(session.Options{Config: config})
 
 	if err != nil {
 		fmt.Printf("Failed to initialize new session: %v", err)
