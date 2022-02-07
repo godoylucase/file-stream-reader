@@ -21,9 +21,7 @@ func NewStorage() (*Storage, error) {
 	}
 
 	ae, ok := os.LookupEnv("AWS_ENDPOINT")
-	if !ok {
-		panic("AWS_ENDPOINT is not set")
-	} else {
+	if ok {
 		config.Credentials = credentials.NewStaticCredentials("test", "test", "")
 		config.Endpoint = aws.String(ae)
 	}

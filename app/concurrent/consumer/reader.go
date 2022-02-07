@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/godoylucase/s3-file-stream-reader/producer"
+	"github.com/godoylucase/s3-file-stream-reader/app/concurrent/producer"
 )
 
 const (
