@@ -11,19 +11,17 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
-type Storage struct {
+type s3Proxy struct {
 	client *s3.S3
 }
 
-func NewStorage() (*Storage, error) {
+func NewS3Proxy() (*s3Proxy, error) {
 	config := aws.Config{
 		Region: aws.String("us-east-1"),
 	}
 
 	ae, ok := os.LookupEnv("AWS_ENDPOINT")
-	if !ok {
-		panic("AWS_ENDPOINT is not set")
-	} else {
+	if ok {
 		config.Credentials = credentials.NewStaticCredentials("test", "test", "")
 		config.Endpoint = aws.String(ae)
 	}
@@ -35,10 +33,10 @@ func NewStorage() (*Storage, error) {
 		return nil, err
 	}
 
-	return &Storage{client: s3.New(sess)}, nil
+	return &s3Proxy{client: s3.New(sess)}, nil
 }
 
-func (s *Storage) ContentLength(filename string) (int64, error) {
+func (s *s3Proxy) ContentLength(filename string) (int64, error) {
 	bucket, key := s.bucketKeyValues(filename)
 
 	head, err := s.client.HeadObject(&s3.HeadObjectInput{
@@ -52,7 +50,7 @@ func (s *Storage) ContentLength(filename string) (int64, error) {
 	return *head.ContentLength, nil
 }
 
-func (s *Storage) ByteRange(filename string, from, to int64, chunk []byte) error {
+func (s *s3Proxy) ByteRange(filename string, from, to int64, chunk []byte) error {
 	bucket, key := s.bucketKeyValues(filename)
 	byteRange := fmt.Sprintf("bytes=%v-%v", from, to)
 
@@ -73,7 +71,7 @@ func (s *Storage) ByteRange(filename string, from, to int64, chunk []byte) error
 	return nil
 }
 
-func (s *Storage) bucketKeyValues(filename string) (string, string) {
+func (s *s3Proxy) bucketKeyValues(filename string) (string, string) {
 	parts := strings.Split(filename, "/")
 	bucket := parts[0]
 	key := fmt.Sprintf("/%v", strings.Join(parts, "/"))
