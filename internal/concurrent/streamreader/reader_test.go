@@ -1,10 +1,10 @@
-package consumer
+package streamreader
 
 import (
 	"context"
 	"testing"
 
-	"github.com/godoylucase/s3-file-stream-reader/app/concurrent/producer"
+	"github.com/godoylucase/s3-file-stream-reader/internal/concurrent/stream"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,7 +13,7 @@ var expected = []string{
 	"50-05", "60-06", "70-07", "80-08", "90-09",
 }
 
-type res struct {
+type dat struct {
 	typ   string
 	value string
 	raw   string
@@ -26,34 +26,34 @@ func TestStreamReader_Read(t *testing.T) {
 		typ := bytes[:2]
 		val := bytes[3:]
 
-		return res{
+		return dat{
 			string(typ),
 			string(val),
 			string(bytes),
 		}, nil
-	})
+	}, 1)
 
-	streams := stream(expected)
+	strm := produce(expected)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	reads := reader.Read(ctx, streams)
+	sdata := reader.Process(ctx, strm)
 	i := 0
 
 readChannel:
 	for {
 		select {
-		case r, ok := <-reads:
+		case sd, ok := <-sdata:
 			if !ok {
 				break readChannel
 			}
 
-			if r.Err != nil {
+			if sd.Err != nil {
 				break readChannel
 			}
 
-			res, ok := r.Data.(res)
+			res, ok := sd.Content.(dat)
 			if !ok {
 				break readChannel
 			}
@@ -78,15 +78,15 @@ readChannel:
 	}
 }
 
-func stream(values []string) <-chan producer.BytesStream {
-	out := make(chan producer.BytesStream, workerCount)
+func produce(values []string) <-chan stream.RangeBytes {
+	out := make(chan stream.RangeBytes, 2)
 
 	go func() {
 		defer close(out)
 		for _, e := range values {
-			out <- producer.BytesStream{
-				RangeMetadata: producer.RangeMetadata{},
-				Chunk:         []byte(e),
+			out <- stream.RangeBytes{
+				Metadata: stream.Metadata{},
+				Bytes:    []byte(e),
 			}
 		}
 	}()
