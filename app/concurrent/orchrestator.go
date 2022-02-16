@@ -28,8 +28,8 @@ func New(producer streamer, consumer reader) *orch {
 }
 
 func (o *orch) Run(ctx context.Context) <-chan consumer.Result {
-	filename := " def " // TODO
-	var bpr int64 = 401
+	filename := "local-test/test-file.txt" // TODO move to somewhere else
+	var bpr int64 = 14
 
 	stream := o.producer.Stream(ctx, filename, bpr)
 
