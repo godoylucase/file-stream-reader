@@ -1,4 +1,4 @@
-package producer
+package stream
 
 import (
 	"context"
@@ -35,8 +35,8 @@ func (s *storageMock) ByteRange(filename string, from, to int64, chunk []byte) e
 }
 
 func Test_producer_Stream(t *testing.T) {
-	p := &producer{
-		s: &storageMock{
+	p := &strm{
+		src: &storageMock{
 			contentLengthFn: func(filename string) (int64, error) {
 				assert.Equal(t, fName, filename)
 				return int64(len(even)), nil
@@ -54,21 +54,21 @@ func Test_producer_Stream(t *testing.T) {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer func() { cancelFunc() }()
 
-	stream := p.Stream(ctx, fName, bpr)
+	stream := p.Start(ctx, fName, bpr)
 	assert.NotNil(t, stream)
 
 	for s := range stream {
 		assert.Equal(t, fName, s.Filename)
 		assert.Nil(t, s.Err)
-		assert.NotEmpty(t, s.Chunk)
-		assert.Equal(t, "22", string(s.Chunk)[:2])
+		assert.NotEmpty(t, s.Bytes)
+		assert.Equal(t, "22", string(s.Bytes)[:2])
 	}
 
 }
 
 func Test_streamOddRanges(t *testing.T) {
 	count := 0
-	for value := range streamRanges("any", int64(len(odd)), bpr) {
+	for value := range ranges("any", int64(len(odd)), bpr) {
 		if count == 2 {
 			assert.True(t, value.From+1 == value.To)
 		}
@@ -80,7 +80,7 @@ func Test_streamOddRanges(t *testing.T) {
 
 func Test_streamEvenRanges(t *testing.T) {
 	count := 0
-	for value := range streamRanges("any", int64(len(even)), bpr) {
+	for value := range ranges("any", int64(len(even)), bpr) {
 		fmt.Printf("+%v\n", value)
 		count++
 	}

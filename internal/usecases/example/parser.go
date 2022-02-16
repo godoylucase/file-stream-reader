@@ -1,0 +1,51 @@
+package example
+
+import (
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/godoylucase/s3-file-stream-reader/internal/concurrent/streamreader"
+)
+
+type data struct {
+	id     string
+	date   *time.Time
+	random string
+}
+
+func ParseFn() streamreader.ParseFn {
+	return func(b []byte) (interface{}, error) {
+		id := string(b[:2])
+		digits := strings.Trim(string(b[11:]), "\n")
+
+		y := string(b[2:7])
+		m := string(b[7:9])
+		d := string(b[9:11])
+
+		year, err := strconv.Atoi(y)
+		if err != nil {
+			return nil, err
+		}
+
+		month, err := strconv.Atoi(m)
+		if err != nil {
+			return nil, err
+		}
+
+		day, err := strconv.Atoi(d)
+		if err != nil {
+			return nil, err
+		}
+
+		date := time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
+
+		parsed := data{
+			id:     id,
+			date:   &date,
+			random: digits,
+		}
+
+		return parsed, nil
+	}
+}

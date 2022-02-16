@@ -1,4 +1,4 @@
-package infra
+package platform
 
 import (
 	"fmt"

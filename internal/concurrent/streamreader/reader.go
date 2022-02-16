@@ -1,40 +1,40 @@
-package consumer
+package streamreader
 
 import (
 	"context"
 	"fmt"
 	"sync"
 
-	"github.com/godoylucase/s3-file-stream-reader/app/concurrent/producer"
-)
-
-const (
-	workerCount = 1
+	"github.com/godoylucase/s3-file-stream-reader/internal/concurrent/stream"
 )
 
 type ParseFn func([]byte) (interface{}, error)
 
-type consumer struct {
+type rdr struct {
 	ParseFn
+	qty uint
 }
 
-type Result struct {
-	Data interface{}
-	Err  error
+type Data struct {
+	Content interface{}
+	Err     error
 }
 
-func New(pf ParseFn) *consumer {
-	return &consumer{pf}
+func New(pf ParseFn, qty uint) *rdr {
+	return &rdr{
+		ParseFn: pf,
+		qty:     qty,
+	}
 }
 
-func (sr *consumer) Read(ctx context.Context, stream <-chan producer.BytesStream) <-chan Result {
-	results := make(chan Result, workerCount)
+func (r *rdr) Process(ctx context.Context, stream <-chan stream.RangeBytes) <-chan Data {
+	results := make(chan Data, r.qty)
 
 	go func() {
 		defer close(results)
 
 		var wg sync.WaitGroup
-		for i := 0; i < workerCount; i++ {
+		for i := 0; i < int(r.qty); i++ {
 			wg.Add(1)
 
 			go func(wg *sync.WaitGroup) {
@@ -47,24 +47,24 @@ func (sr *consumer) Read(ctx context.Context, stream <-chan producer.BytesStream
 						}
 
 						if s.Err != nil {
-							results <- Result{
+							results <- Data{
 								Err: s.Err,
 							}
 							return
 						}
 
-						parsed, err := sr.ParseFn(s.Chunk)
+						parsed, err := r.ParseFn(s.Bytes)
 						if err != nil {
-							results <- Result{
+							results <- Data{
 								Err: err,
 							}
 							return
 						}
 
-						results <- Result{Data: parsed}
+						results <- Data{Content: parsed}
 					case <-ctx.Done():
 						fmt.Printf("cancelled context: %v\n", ctx.Err())
-						results <- Result{Err: ctx.Err()}
+						results <- Data{Err: ctx.Err()}
 						return
 					}
 				}
