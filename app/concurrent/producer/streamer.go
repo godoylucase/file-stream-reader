@@ -8,7 +8,7 @@ import (
 
 const (
 	rangeBufferSize = 3
-	workerCount     = 3
+	workerCount     = 1
 )
 
 type storage interface {
@@ -98,7 +98,6 @@ func (p *producer) Stream(ctx context.Context, fName string, bytesPerRead int64)
 
 func streamRanges(filename string, length int64, bpr int64) <-chan RangeMetadata {
 	ranges := length / bpr
-	remaining := length % bpr
 
 	// allocates ranges To be processed later on by reading the returned channel
 	rangesBuffer := make(chan RangeMetadata, rangeBufferSize)
@@ -109,7 +108,7 @@ func streamRanges(filename string, length int64, bpr int64) <-chan RangeMetadata
 			from := i * bpr
 			to := from + bpr
 			if to > length {
-				to = from + remaining
+				to = length
 			}
 
 			rm := RangeMetadata{
@@ -118,7 +117,7 @@ func streamRanges(filename string, length int64, bpr int64) <-chan RangeMetadata
 				To:       to,
 			}
 
-			fmt.Printf("sending buffer metadata %+v To channel\n", rm)
+			//fmt.Printf("sending buffer metadata %+v To channel\n", rm)
 
 			rangesBuffer <- rm
 		}

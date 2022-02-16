@@ -2,6 +2,7 @@ package infra
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -17,7 +18,8 @@ type s3Proxy struct {
 
 func NewS3Proxy() (*s3Proxy, error) {
 	config := aws.Config{
-		Region: aws.String("us-east-1"),
+		Region:           aws.String("us-east-1"),
+		S3ForcePathStyle: aws.Bool(true),
 	}
 
 	ae, ok := os.LookupEnv("AWS_ENDPOINT")
@@ -64,7 +66,7 @@ func (s *s3Proxy) ByteRange(filename string, from, to int64, chunk []byte) error
 	}
 
 	defer object.Body.Close()
-	if _, err := object.Body.Read(chunk); err != nil {
+	if n, err := object.Body.Read(chunk); n == 0 && err == io.EOF {
 		return err
 	}
 
@@ -74,6 +76,6 @@ func (s *s3Proxy) ByteRange(filename string, from, to int64, chunk []byte) error
 func (s *s3Proxy) bucketKeyValues(filename string) (string, string) {
 	parts := strings.Split(filename, "/")
 	bucket := parts[0]
-	key := fmt.Sprintf("/%v", strings.Join(parts, "/"))
+	key := fmt.Sprintf("/%v", strings.Join(parts[1:], "/"))
 	return bucket, key
 }

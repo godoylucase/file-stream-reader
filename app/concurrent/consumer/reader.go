@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	workerCount = 3
+	workerCount = 1
 )
 
 type ParseFn func([]byte) (interface{}, error)
@@ -43,6 +43,13 @@ func (sr *consumer) Read(ctx context.Context, stream <-chan producer.BytesStream
 					select {
 					case s, ok := <-stream:
 						if !ok {
+							return
+						}
+
+						if s.Err != nil {
+							results <- Result{
+								Err: s.Err,
+							}
 							return
 						}
 
