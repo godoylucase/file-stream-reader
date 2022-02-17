@@ -1,14 +1,11 @@
-package platform
+package awss3
 
 import (
 	"fmt"
 	"io"
-	"os"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
@@ -16,26 +13,13 @@ type s3Proxy struct {
 	client *s3.S3
 }
 
-func NewS3Proxy() (*s3Proxy, error) {
-	config := aws.Config{
-		Region:           aws.String("us-east-1"),
-		S3ForcePathStyle: aws.Bool(true),
-	}
-
-	ae, ok := os.LookupEnv("AWS_ENDPOINT")
-	if ok {
-		config.Credentials = credentials.NewStaticCredentials("test", "test", "")
-		config.Endpoint = aws.String(ae)
-	}
-
-	sess, err := session.NewSessionWithOptions(session.Options{Config: config})
-
+func NewProxy() (*s3Proxy, error) {
+	client, err := Client()
 	if err != nil {
-		fmt.Printf("Failed to initialize new session: %v", err)
 		return nil, err
 	}
 
-	return &s3Proxy{client: s3.New(sess)}, nil
+	return &s3Proxy{client: client}, nil
 }
 
 func (s *s3Proxy) ContentLength(filename string) (int64, error) {

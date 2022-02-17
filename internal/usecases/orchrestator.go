@@ -33,5 +33,4 @@ func (o *orch) Run(ctx context.Context) <-chan streamreader.Data {
 	strm := o.stream.Start(ctx, filename, bpr)
 
 	return o.reader.Process(ctx, strm)
-
 }

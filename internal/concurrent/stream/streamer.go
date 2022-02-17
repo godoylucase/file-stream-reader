@@ -40,6 +40,8 @@ func New(src source, qty uint) *strm {
 }
 
 func (s *strm) Start(ctx context.Context, fName string, bytesPerRead int64) <-chan RangeBytes {
+	// TODO move arguments as config struct properties
+
 	stream := make(chan RangeBytes, s.qty)
 
 	length, err := s.src.ContentLength(fName)
