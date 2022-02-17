@@ -11,13 +11,13 @@ import (
 type data struct {
 	id     string
 	date   *time.Time
-	random string
+	amount string
 }
 
 func ParseFn() streamreader.ParseFn {
 	return func(b []byte) (interface{}, error) {
 		id := string(b[:2])
-		digits := strings.Trim(string(b[11:]), "\n")
+		amount := strings.Trim(string(b[11:]), "\n")
 
 		y := string(b[2:7])
 		m := string(b[7:9])
@@ -43,7 +43,7 @@ func ParseFn() streamreader.ParseFn {
 		parsed := data{
 			id:     id,
 			date:   &date,
-			random: digits,
+			amount: amount,
 		}
 
 		return parsed, nil
