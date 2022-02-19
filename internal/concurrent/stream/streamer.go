@@ -6,11 +6,7 @@ import (
 	"sync"
 )
 
-const (
-	rangeBufferSize = 10
-)
-
-type source interface {
+type Source interface {
 	ContentLength(filename string) (int64, error)
 	ByteRange(filename string, from, to int64, chunk []byte) error
 }
@@ -27,24 +23,29 @@ type RangeBytes struct {
 	Err   error
 }
 
-type strm struct {
-	src source
-	qty uint
+type Config struct {
+	Source       Source
+	StreamersQty uint
+	BytesPerRead int64
+	Filename     string
 }
 
-func New(src source, qty uint) *strm {
+type strm struct {
+	conf *Config
+}
+
+func New(cfg *Config) *strm {
 	return &strm{
-		src: src,
-		qty: qty,
+		conf: cfg,
 	}
 }
 
-func (s *strm) Start(ctx context.Context, fName string, bytesPerRead int64) <-chan RangeBytes {
-	// TODO move arguments as config struct properties
+func (s *strm) Start(ctx context.Context) <-chan RangeBytes {
+	filename := s.conf.Filename
 
-	stream := make(chan RangeBytes, s.qty)
+	stream := make(chan RangeBytes, s.conf.StreamersQty)
 
-	length, err := s.src.ContentLength(fName)
+	length, err := s.conf.Source.ContentLength(filename)
 	if err != nil {
 		defer close(stream)
 		stream <- RangeBytes{
@@ -54,17 +55,17 @@ func (s *strm) Start(ctx context.Context, fName string, bytesPerRead int64) <-ch
 		return stream
 	}
 
-	ranges := ranges(fName, length, bytesPerRead)
+	ranges := ranges(filename, length, s.conf.BytesPerRead, s.conf.StreamersQty)
 
 	go func() {
 		defer close(stream)
 
 		var wg sync.WaitGroup
-		for i := 0; i < int(s.qty); i++ {
+		for i := 0; i < int(s.conf.StreamersQty); i++ {
 			wg.Add(1)
 
 			// for each worker run a goroutine To read From the ranges channel and reach
-			// such range From the src
+			// such range From the Source
 			go func(wg *sync.WaitGroup) {
 				defer wg.Done()
 				for {
@@ -73,8 +74,8 @@ func (s *strm) Start(ctx context.Context, fName string, bytesPerRead int64) <-ch
 						if !ok {
 							return
 						}
-						chunk := make([]byte, bytesPerRead)
-						if err := s.src.ByteRange(fName, r.From, r.To, chunk); err != nil {
+						chunk := make([]byte, s.conf.BytesPerRead)
+						if err := s.conf.Source.ByteRange(filename, r.From, r.To, chunk); err != nil {
 							stream <- RangeBytes{
 								Metadata: r,
 								Err:      err,
@@ -102,11 +103,11 @@ func (s *strm) Start(ctx context.Context, fName string, bytesPerRead int64) <-ch
 	return stream
 }
 
-func ranges(filename string, length int64, bpr int64) <-chan Metadata {
+func ranges(filename string, length, bpr int64, qty uint) <-chan Metadata {
 	ranges := length / bpr
 
 	// allocates ranges To be processed later on by reading the returned channel
-	rangesBuffer := make(chan Metadata, rangeBufferSize)
+	rangesBuffer := make(chan Metadata, qty)
 	go func() {
 		defer close(rangesBuffer)
 

@@ -27,6 +27,7 @@ var pushToS3Cmd = &cobra.Command{
 		err := mapstructure.Decode(argsMap(args), &pargs)
 		if err != nil {
 			fmt.Println(err)
+			return
 		}
 
 		s3cli, err := awss3.Client()
@@ -43,7 +44,7 @@ var pushToS3Cmd = &cobra.Command{
 			if _, err := s3cli.CreateBucket(&s3.CreateBucketInput{
 				Bucket: aws.String(pargs.Bucket),
 			}); err != nil {
-				fmt.Printf("error creating the bucket with name %v\n", pargs.Bucket)
+				fmt.Printf("error creating the bucket with name %v\n with error %+v\n", pargs.Bucket, err)
 				return
 			}
 		}

@@ -1,14 +1,12 @@
-package usecases
+package orch
 
 import (
 	"context"
 	"fmt"
 	"strconv"
-	"testing"
 
 	"github.com/godoylucase/s3-file-stream-reader/internal/concurrent/stream"
 	"github.com/godoylucase/s3-file-stream-reader/internal/concurrent/streamreader"
-	"github.com/stretchr/testify/assert"
 )
 
 type content struct {
@@ -78,27 +76,27 @@ func (r *rdr) Process(ctx context.Context, stream <-chan stream.RangeBytes) <-ch
 	return data
 }
 
-func Test_orch_Run(t *testing.T) {
-	orch := New(&strm{}, &rdr{})
-
-	data := orch.Run(context.TODO())
-	assert.NotNil(t, data)
-
-	for d := range data {
-		assert.NotNil(t, d)
-		assert.Nil(t, d.Err)
-		assert.NotNil(t, d.Content)
-
-		content, ok := d.Content.(content)
-		if !ok {
-			t.Fail()
-		}
-
-		assert.Equal(t, "test", content.filename)
-		assert.Greater(t, content.data, int64(0))
-		assert.Less(t, content.data, int64(101))
-	}
-
-	_, ok := <-data
-	assert.False(t, ok)
-}
+//func Test_orch_Run(t *testing.T) {
+//	orch := FromConfig(&strm{}, &rdr{})
+//
+//	data := orch.Run(context.TODO())
+//	assert.NotNil(t, data)
+//
+//	for d := range data {
+//		assert.NotNil(t, d)
+//		assert.Nil(t, d.Err)
+//		assert.NotNil(t, d.Content)
+//
+//		content, ok := d.Content.(content)
+//		if !ok {
+//			t.Fail()
+//		}
+//
+//		assert.Equal(t, "test", content.filename)
+//		assert.Greater(t, content.data, int64(0))
+//		assert.Less(t, content.data, int64(101))
+//	}
+//
+//	_, ok := <-data
+//	assert.False(t, ok)
+//}
