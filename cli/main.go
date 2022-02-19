@@ -1,12 +1,10 @@
-/*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
-*/
 package main
 
 import (
 	"github.com/godoylucase/s3-file-stream-reader/cli/cmd"
 	"github.com/joho/godotenv"
+
+	_ "github.com/godoylucase/s3-file-stream-reader/usecase/example"
 )
 
 func main() {
