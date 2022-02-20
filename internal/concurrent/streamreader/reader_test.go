@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/godoylucase/s3-file-stream-reader/internal/concurrent/stream"
+	"github.com/godoylucase/s3-file-stream-reader/internal/concurrent/filestream"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,7 +22,7 @@ type dat struct {
 func TestStreamReader_Read(t *testing.T) {
 	expMap := make(map[string]struct{}, len(expected))
 
-	reader := New(func(bytes []byte) (interface{}, error) {
+	orfn := func(bytes []byte) (interface{}, error) {
 		typ := bytes[:2]
 		val := bytes[3:]
 
@@ -31,7 +31,17 @@ func TestStreamReader_Read(t *testing.T) {
 			string(val),
 			string(bytes),
 		}, nil
-	}, 1)
+	}
+
+	key := "orfn"
+	registry.Store(key, orfn)
+
+	cfg := &Config{
+		ReadersQty:   1,
+		OnReadFnName: key,
+	}
+
+	reader := New(cfg)
 
 	strm := produce(expected)
 
@@ -78,14 +88,14 @@ readChannel:
 	}
 }
 
-func produce(values []string) <-chan stream.RangeBytes {
-	out := make(chan stream.RangeBytes, 2)
+func produce(values []string) <-chan filestream.RangeBytes {
+	out := make(chan filestream.RangeBytes, 2)
 
 	go func() {
 		defer close(out)
 		for _, e := range values {
-			out <- stream.RangeBytes{
-				Metadata: stream.Metadata{},
+			out <- filestream.RangeBytes{
+				Metadata: filestream.Metadata{},
 				Bytes:    []byte(e),
 			}
 		}

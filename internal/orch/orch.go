@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/godoylucase/s3-file-stream-reader/internal/concurrent/stream"
+	"github.com/godoylucase/s3-file-stream-reader/internal/concurrent/filestream"
 	"github.com/godoylucase/s3-file-stream-reader/internal/concurrent/streamreader"
 	"github.com/godoylucase/s3-file-stream-reader/internal/platform/awss3"
 	"github.com/mitchellh/mapstructure"
@@ -18,11 +18,11 @@ const (
 )
 
 type streamer interface {
-	Start(ctx context.Context) <-chan stream.RangeBytes
+	Start(ctx context.Context) <-chan filestream.RangeBytes
 }
 
 type reader interface {
-	Process(ctx context.Context, stream <-chan stream.RangeBytes) <-chan streamreader.Data
+	Process(ctx context.Context, stream <-chan filestream.RangeBytes) <-chan streamreader.Data
 }
 type Orch struct {
 	streamer streamer
@@ -79,7 +79,7 @@ func FromConfig(conf *Config) (*Orch, error) {
 		return nil, err
 	}
 
-	s := stream.New(&stream.Config{
+	s := filestream.New(&filestream.Config{
 		Source:       src,
 		StreamersQty: uint(sqty),
 		BytesPerRead: int64(cbs),
@@ -107,8 +107,8 @@ func (o *Orch) Run(ctx context.Context) <-chan streamreader.Data {
 	return o.reader.Process(ctx, strm)
 }
 
-func source(typ string) (stream.Source, error) {
-	var src stream.Source
+func source(typ string) (filestream.Source, error) {
+	var src filestream.Source
 	switch typ {
 	case TypeBucket:
 		s, err := awss3.NewProxy()

@@ -7,14 +7,14 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/godoylucase/s3-file-stream-reader/internal/concurrent/stream"
+	"github.com/godoylucase/s3-file-stream-reader/internal/concurrent/filestream"
 )
 
 type s3Proxy struct {
 	client *s3.S3
 }
 
-func NewProxy() (stream.Source, error) {
+func NewProxy() (filestream.Source, error) {
 	client, err := Client()
 	if err != nil {
 		return nil, err

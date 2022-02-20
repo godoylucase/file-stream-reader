@@ -29,7 +29,7 @@ var streamFileCmd = &cobra.Command{
 		}
 
 		for d := range or.Run(ctx) {
-			fmt.Printf("read data from stream with values: %+v\n", d)
+			fmt.Printf("read data from filestream with values: %+v\n", d)
 		}
 	},
 }
