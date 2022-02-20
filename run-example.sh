@@ -6,7 +6,7 @@ chunkSize=14
 
 # prepares test file
 go run ./cli/main.go pushToS3 \
-  from=./mock/example-test-file.txt \
+  from=./example/example-test-file.txt \
   bucket=$bucket \
   key=$key
 

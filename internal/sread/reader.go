@@ -1,11 +1,11 @@
-package streamreader
+package sread
 
 import (
 	"context"
 	"fmt"
 	"sync"
 
-	"github.com/godoylucase/s3-file-stream-reader/internal/concurrent/filestream"
+	fstream2 "github.com/godoylucase/s3-file-stream-reader/internal/fstream"
 )
 
 var registry = sync.Map{}
@@ -52,7 +52,7 @@ func New(cfg *Config) *rdr {
 	}
 }
 
-func (r *rdr) Process(ctx context.Context, stream <-chan filestream.RangeBytes) <-chan Data {
+func (r *rdr) Process(ctx context.Context, stream <-chan fstream2.RangeBytes) <-chan Data {
 	results := make(chan Data, r.conf.ReadersQty)
 
 	go func() {
