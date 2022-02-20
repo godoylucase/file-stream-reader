@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"strings"
 
-	fstream2 "github.com/godoylucase/s3-file-stream-reader/internal/fstream"
-	sread2 "github.com/godoylucase/s3-file-stream-reader/internal/sread"
-	awss32 "github.com/godoylucase/s3-file-stream-reader/platform/awss3"
+	"github.com/godoylucase/s3-file-stream-reader/internal/fstream"
+	"github.com/godoylucase/s3-file-stream-reader/internal/sread"
+	"github.com/godoylucase/s3-file-stream-reader/platform/awss3"	
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -18,11 +18,11 @@ const (
 )
 
 type streamer interface {
-	Start(ctx context.Context) <-chan fstream2.RangeBytes
+	Start(ctx context.Context) <-chan fstream.RangeBytes
 }
 
 type reader interface {
-	Process(ctx context.Context, stream <-chan fstream2.RangeBytes) <-chan sread2.Data
+	Process(ctx context.Context, stream <-chan fstream.RangeBytes) <-chan sread.Data
 }
 type Orch struct {
 	streamer streamer
@@ -79,7 +79,7 @@ func FromConfig(conf *Config) (*Orch, error) {
 		return nil, err
 	}
 
-	s := fstream2.New(&fstream2.Config{
+	s := fstream.New(&fstream.Config{
 		Source:       src,
 		StreamersQty: uint(sqty),
 		BytesPerRead: int64(cbs),
@@ -91,7 +91,7 @@ func FromConfig(conf *Config) (*Orch, error) {
 		return nil, err
 	}
 
-	r := sread2.New(&sread2.Config{
+	r := sread.New(&sread.Config{
 		ReadersQty:   uint(rqty),
 		OnReadFnName: conf.OnReadFnName,
 	})
@@ -102,16 +102,16 @@ func FromConfig(conf *Config) (*Orch, error) {
 	}, nil
 }
 
-func (o *Orch) Run(ctx context.Context) <-chan sread2.Data {
+func (o *Orch) Run(ctx context.Context) <-chan sread.Data {
 	strm := o.streamer.Start(ctx)
 	return o.reader.Process(ctx, strm)
 }
 
-func source(typ string) (fstream2.Source, error) {
-	var src fstream2.Source
+func source(typ string) (fstream.Source, error) {
+	var src fstream.Source
 	switch typ {
 	case TypeBucket:
-		s, err := awss32.NewProxy()
+		s, err := awss3.NewProxy()
 		if err != nil {
 			return nil, err
 		}

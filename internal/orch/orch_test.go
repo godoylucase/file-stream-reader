@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
-	fstream2 "github.com/godoylucase/s3-file-stream-reader/internal/fstream"
-	sread2 "github.com/godoylucase/s3-file-stream-reader/internal/sread"
+	"github.com/godoylucase/s3-file-stream-reader/internal/fstream"
+	"github.com/godoylucase/s3-file-stream-reader/internal/sread"
 )
 
 type content struct {
@@ -15,17 +15,17 @@ type content struct {
 }
 
 type strm struct {
-	streamFn func(ctx context.Context, fName string, bytesPerRead int64) <-chan fstream2.RangeBytes
+	streamFn func(ctx context.Context, fName string, bytesPerRead int64) <-chan fstream.RangeBytes
 }
 
-func (s *strm) Start(ctx context.Context, fName string, bytesPerRead int64) <-chan fstream2.RangeBytes {
-	rb := make(chan fstream2.RangeBytes, 3)
+func (s *strm) Start(ctx context.Context, fName string, bytesPerRead int64) <-chan fstream.RangeBytes {
+	rb := make(chan fstream.RangeBytes, 3)
 
 	go func() {
 		defer close(rb)
 		for i := 1; i <= 100; i++ {
-			rb <- fstream2.RangeBytes{
-				Metadata: fstream2.Metadata{
+			rb <- fstream.RangeBytes{
+				Metadata: fstream.Metadata{
 					Filename: "test",
 					From:     int64(i - 1),
 					To:       int64(i),
@@ -40,11 +40,11 @@ func (s *strm) Start(ctx context.Context, fName string, bytesPerRead int64) <-ch
 }
 
 type rdr struct {
-	readFn func(ctx context.Context, stream <-chan fstream2.RangeBytes) <-chan sread2.Data
+	readFn func(ctx context.Context, stream <-chan fstream.RangeBytes) <-chan sread.Data
 }
 
-func (r *rdr) Process(ctx context.Context, stream <-chan fstream2.RangeBytes) <-chan sread2.Data {
-	data := make(chan sread2.Data)
+func (r *rdr) Process(ctx context.Context, stream <-chan fstream.RangeBytes) <-chan sread.Data {
+	data := make(chan sread.Data)
 
 	go func() {
 		defer close(data)
@@ -61,7 +61,7 @@ func (r *rdr) Process(ctx context.Context, stream <-chan fstream2.RangeBytes) <-
 					return
 				}
 
-				data <- sread2.Data{
+				data <- sread.Data{
 					Content: content{
 						filename: s.Metadata.Filename,
 						data:     int64(d),
