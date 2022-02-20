@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/godoylucase/s3-file-stream-reader/internal/concurrent/stream"
+	"github.com/godoylucase/s3-file-stream-reader/internal/concurrent/filestream"
 	"github.com/godoylucase/s3-file-stream-reader/internal/concurrent/streamreader"
 )
 
@@ -15,17 +15,17 @@ type content struct {
 }
 
 type strm struct {
-	streamFn func(ctx context.Context, fName string, bytesPerRead int64) <-chan stream.RangeBytes
+	streamFn func(ctx context.Context, fName string, bytesPerRead int64) <-chan filestream.RangeBytes
 }
 
-func (s *strm) Start(ctx context.Context, fName string, bytesPerRead int64) <-chan stream.RangeBytes {
-	rb := make(chan stream.RangeBytes, 3)
+func (s *strm) Start(ctx context.Context, fName string, bytesPerRead int64) <-chan filestream.RangeBytes {
+	rb := make(chan filestream.RangeBytes, 3)
 
 	go func() {
 		defer close(rb)
 		for i := 1; i <= 100; i++ {
-			rb <- stream.RangeBytes{
-				Metadata: stream.Metadata{
+			rb <- filestream.RangeBytes{
+				Metadata: filestream.Metadata{
 					Filename: "test",
 					From:     int64(i - 1),
 					To:       int64(i),
@@ -40,10 +40,10 @@ func (s *strm) Start(ctx context.Context, fName string, bytesPerRead int64) <-ch
 }
 
 type rdr struct {
-	readFn func(ctx context.Context, stream <-chan stream.RangeBytes) <-chan streamreader.Data
+	readFn func(ctx context.Context, stream <-chan filestream.RangeBytes) <-chan streamreader.Data
 }
 
-func (r *rdr) Process(ctx context.Context, stream <-chan stream.RangeBytes) <-chan streamreader.Data {
+func (r *rdr) Process(ctx context.Context, stream <-chan filestream.RangeBytes) <-chan streamreader.Data {
 	data := make(chan streamreader.Data)
 
 	go func() {

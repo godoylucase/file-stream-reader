@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/godoylucase/s3-file-stream-reader/internal/concurrent/stream"
+	"github.com/godoylucase/s3-file-stream-reader/internal/concurrent/filestream"
 )
 
 var registry = sync.Map{}
@@ -21,7 +21,13 @@ func OnReadFn(name string) (OnStreamRead, error) {
 	if !ok {
 		return nil, fmt.Errorf("%v is not a valid on read function", name)
 	}
-	return load.(OnStreamRead), nil
+
+	fn, ok := load.(func([]byte) (interface{}, error))
+	if !ok {
+		return nil, fmt.Errorf("%v is not a valid on read function", name)
+	}
+
+	return fn, nil
 }
 
 type rdr struct {
@@ -44,7 +50,7 @@ func New(cfg *Config) *rdr {
 	}
 }
 
-func (r *rdr) Process(ctx context.Context, stream <-chan stream.RangeBytes) <-chan Data {
+func (r *rdr) Process(ctx context.Context, stream <-chan filestream.RangeBytes) <-chan Data {
 	results := make(chan Data, r.conf.ReadersQty)
 
 	go func() {
