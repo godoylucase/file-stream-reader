@@ -12,12 +12,14 @@ var registry = sync.Map{}
 
 type OnStreamRead func([]byte) (interface{}, error)
 
-func RegisterFn(name string, fn OnStreamRead) {
+func RegisterFn(name string, fn func([]byte) (interface{}, error)) {
+	fmt.Printf("registering on read function with name: %+v\n", name)
 	registry.Store(name, fn)
 }
 
 func OnReadFn(name string) (OnStreamRead, error) {
 	load, ok := registry.Load(name)
+	fmt.Println(load)
 	if !ok {
 		return nil, fmt.Errorf("%v is not a valid on read function", name)
 	}
