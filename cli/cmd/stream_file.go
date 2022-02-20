@@ -10,11 +10,19 @@ import (
 )
 
 // streamFileCmd represents the streamFile command
-var streamFileCmd = &cobra.Command{
-	Use:   "streamFile",
-	Short: "",
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx, cancel := context.WithCancel(context.Background())
+var streamFileCmd = streamFile()
+
+func streamFile() *cobra.Command {
+	return &cobra.Command{
+		Use:   "streamFile",
+		Short: "",
+		Run:   commandFn(),
+	}
+}
+
+func commandFn() func(cmd *cobra.Command, args []string) {
+	return func(cmd *cobra.Command, args []string) {
+		ctx, cancel := context.WithCancel(cmd.Context())
 		defer cancel()
 
 		var sfargs orch.Config
@@ -31,7 +39,7 @@ var streamFileCmd = &cobra.Command{
 		for d := range or.Run(ctx) {
 			fmt.Printf("read data from filestream with values: %+v\n", d)
 		}
-	},
+	}
 }
 
 func init() {
