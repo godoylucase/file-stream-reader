@@ -1,10 +1,10 @@
-package streamreader
+package sread
 
 import (
 	"context"
 	"testing"
 
-	"github.com/godoylucase/s3-file-stream-reader/internal/concurrent/filestream"
+	fstream2 "github.com/godoylucase/s3-file-stream-reader/internal/fstream"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -88,14 +88,14 @@ readChannel:
 	}
 }
 
-func produce(values []string) <-chan filestream.RangeBytes {
-	out := make(chan filestream.RangeBytes, 2)
+func produce(values []string) <-chan fstream2.RangeBytes {
+	out := make(chan fstream2.RangeBytes, 2)
 
 	go func() {
 		defer close(out)
 		for _, e := range values {
-			out <- filestream.RangeBytes{
-				Metadata: filestream.Metadata{},
+			out <- fstream2.RangeBytes{
+				Metadata: fstream2.Metadata{},
 				Bytes:    []byte(e),
 			}
 		}

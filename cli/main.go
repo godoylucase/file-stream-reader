@@ -4,7 +4,7 @@ import (
 	"github.com/godoylucase/s3-file-stream-reader/cli/cmd"
 	"github.com/joho/godotenv"
 
-	_ "github.com/godoylucase/s3-file-stream-reader/usecase/example"
+	_ "github.com/godoylucase/s3-file-stream-reader/example"
 )
 
 func main() {

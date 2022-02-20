@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/godoylucase/s3-file-stream-reader/internal/concurrent/streamreader"
+	sread2 "github.com/godoylucase/s3-file-stream-reader/internal/sread"
 )
 
 const (
@@ -19,7 +19,7 @@ type data struct {
 }
 
 func init() {
-	streamreader.RegisterFn(fnName, fn)
+	sread2.RegisterFn(fnName, fn)
 }
 
 func fn(b []byte) (interface{}, error) {

@@ -37,7 +37,7 @@ func commandFn() func(cmd *cobra.Command, args []string) {
 		}
 
 		for d := range or.Run(ctx) {
-			fmt.Printf("read data from filestream with values: %+v\n", d)
+			fmt.Printf("read data from fstream with values: %+v\n", d)
 		}
 	}
 }

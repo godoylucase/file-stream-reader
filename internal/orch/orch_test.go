@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/godoylucase/s3-file-stream-reader/internal/concurrent/filestream"
-	"github.com/godoylucase/s3-file-stream-reader/internal/concurrent/streamreader"
+	fstream2 "github.com/godoylucase/s3-file-stream-reader/internal/fstream"
+	sread2 "github.com/godoylucase/s3-file-stream-reader/internal/sread"
 )
 
 type content struct {
@@ -15,17 +15,17 @@ type content struct {
 }
 
 type strm struct {
-	streamFn func(ctx context.Context, fName string, bytesPerRead int64) <-chan filestream.RangeBytes
+	streamFn func(ctx context.Context, fName string, bytesPerRead int64) <-chan fstream2.RangeBytes
 }
 
-func (s *strm) Start(ctx context.Context, fName string, bytesPerRead int64) <-chan filestream.RangeBytes {
-	rb := make(chan filestream.RangeBytes, 3)
+func (s *strm) Start(ctx context.Context, fName string, bytesPerRead int64) <-chan fstream2.RangeBytes {
+	rb := make(chan fstream2.RangeBytes, 3)
 
 	go func() {
 		defer close(rb)
 		for i := 1; i <= 100; i++ {
-			rb <- filestream.RangeBytes{
-				Metadata: filestream.Metadata{
+			rb <- fstream2.RangeBytes{
+				Metadata: fstream2.Metadata{
 					Filename: "test",
 					From:     int64(i - 1),
 					To:       int64(i),
@@ -40,11 +40,11 @@ func (s *strm) Start(ctx context.Context, fName string, bytesPerRead int64) <-ch
 }
 
 type rdr struct {
-	readFn func(ctx context.Context, stream <-chan filestream.RangeBytes) <-chan streamreader.Data
+	readFn func(ctx context.Context, stream <-chan fstream2.RangeBytes) <-chan sread2.Data
 }
 
-func (r *rdr) Process(ctx context.Context, stream <-chan filestream.RangeBytes) <-chan streamreader.Data {
-	data := make(chan streamreader.Data)
+func (r *rdr) Process(ctx context.Context, stream <-chan fstream2.RangeBytes) <-chan sread2.Data {
+	data := make(chan sread2.Data)
 
 	go func() {
 		defer close(data)
@@ -61,7 +61,7 @@ func (r *rdr) Process(ctx context.Context, stream <-chan filestream.RangeBytes) 
 					return
 				}
 
-				data <- streamreader.Data{
+				data <- sread2.Data{
 					Content: content{
 						filename: s.Metadata.Filename,
 						data:     int64(d),

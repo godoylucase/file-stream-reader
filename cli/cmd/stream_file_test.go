@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	_ "github.com/godoylucase/s3-file-stream-reader/usecase/example"
+	_ "github.com/godoylucase/s3-file-stream-reader/example"
 )
 
 //go run ./cli/main.go streamFile \
