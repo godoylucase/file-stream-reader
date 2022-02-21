@@ -2,70 +2,70 @@ package fstream
 
 import (
 	"context"
-	"fmt"
 	"sync"
 )
 
-type Source interface {
-	ContentLength(filename string) (int64, error)
-	ByteRange(filename string, from, to int64, chunk []byte) error
+type FileSource interface {
+	Length(filename string) (int64, error)
+	Bytes(filename string, from, to int64, chunk []byte) error
 }
 
-type Metadata struct {
+type metadata struct {
+	filename string
+	from     int64
+	to       int64
+}
+
+type Chunk struct {
 	Filename string
 	From     int64
 	To       int64
+	Bytes    []byte
+	Err      error
 }
 
-type RangeBytes struct {
-	Metadata
-	Bytes []byte
-	Err   error
-}
-
-type Config struct {
-	Source       Source
-	StreamersQty uint
-	BytesPerRead int64
-	Filename     string
+type WithConfig struct {
+	Streamers uint
+	ChunkSize int64
+	Filename  string
 }
 
 type strm struct {
-	conf *Config
+	fsource FileSource
+	conf    *WithConfig
 }
 
-func New(cfg *Config) *strm {
+func New(fs FileSource, conf *WithConfig) *strm {
 	return &strm{
-		conf: cfg,
+		fsource: fs,
+		conf:    conf,
 	}
 }
 
-func (s *strm) Start(ctx context.Context) <-chan RangeBytes {
+func (s *strm) Start(ctx context.Context) <-chan Chunk {
 	filename := s.conf.Filename
 
-	stream := make(chan RangeBytes, s.conf.StreamersQty)
+	stream := make(chan Chunk, s.conf.Streamers)
 
-	length, err := s.conf.Source.ContentLength(filename)
+	length, err := s.fsource.Length(filename)
 	if err != nil {
 		defer close(stream)
-		stream <- RangeBytes{
-			Bytes: nil,
-			Err:   err,
+		stream <- Chunk{
+			Filename: filename,
+			Err:      err,
 		}
 		return stream
 	}
 
-	ranges := ranges(filename, length, s.conf.BytesPerRead, s.conf.StreamersQty)
+	ranges := chunkRanges(filename, length, s.conf.ChunkSize)
 
 	go func() {
 		defer close(stream)
 
 		var wg sync.WaitGroup
-		for i := 0; i < int(s.conf.StreamersQty); i++ {
+		for i := 0; i < int(s.conf.Streamers); i++ {
 			wg.Add(1)
 
-			// for each worker run a goroutine To read From the ranges channel and reach
-			// such range From the Source
 			go func(wg *sync.WaitGroup) {
 				defer wg.Done()
 				for {
@@ -74,22 +74,26 @@ func (s *strm) Start(ctx context.Context) <-chan RangeBytes {
 						if !ok {
 							return
 						}
-						chunk := make([]byte, s.conf.BytesPerRead)
-						if err := s.conf.Source.ByteRange(filename, r.From, r.To, chunk); err != nil {
-							stream <- RangeBytes{
-								Metadata: r,
+
+						chunk := make([]byte, s.conf.ChunkSize)
+						if err := s.fsource.Bytes(filename, r.from, r.to, chunk); err != nil {
+							stream <- Chunk{
+								Filename: r.filename,
+								From:     r.from,
+								To:       r.to,
 								Err:      err,
 							}
 							return
 						}
 
-						stream <- RangeBytes{
-							Metadata: r,
+						stream <- Chunk{
+							Filename: r.filename,
+							From:     r.from,
+							To:       r.to,
 							Bytes:    chunk,
 						}
 					case <-ctx.Done():
-						fmt.Printf("cancelled context: %v\n", ctx.Err())
-						stream <- RangeBytes{
+						stream <- Chunk{
 							Err: ctx.Err(),
 						}
 						return
@@ -103,30 +107,29 @@ func (s *strm) Start(ctx context.Context) <-chan RangeBytes {
 	return stream
 }
 
-func ranges(filename string, length, bpr int64, qty uint) <-chan Metadata {
-	ranges := length / bpr
+func chunkRanges(filename string, length, chunkSize int64) <-chan metadata {
+	qty := length / chunkSize
 
-	// allocates ranges To be processed later on by reading the returned channel
-	rangesBuffer := make(chan Metadata, qty)
+	buf := make(chan metadata, qty)
 	go func() {
-		defer close(rangesBuffer)
+		defer close(buf)
 
-		for i := int64(0); i <= ranges; i++ {
-			from := i * bpr
-			to := from + bpr
+		for i := int64(0); i <= qty; i++ {
+			from := i * chunkSize
+			to := from + chunkSize
 			if to > length {
 				to = length
 			}
 
-			rm := Metadata{
-				Filename: filename,
-				From:     from,
-				To:       to,
+			meta := metadata{
+				filename: filename,
+				from:     from,
+				to:       to,
 			}
 
-			rangesBuffer <- rm
+			buf <- meta
 		}
 	}()
 
-	return rangesBuffer
+	return buf
 }

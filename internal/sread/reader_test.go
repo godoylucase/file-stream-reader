@@ -36,7 +36,7 @@ func TestStreamReader_Read(t *testing.T) {
 	key := "orfn"
 	registry.Store(key, orfn)
 
-	cfg := &Config{
+	cfg := &WithConfig{
 		ReadersQty:   1,
 		OnReadFnName: key,
 	}
@@ -88,15 +88,14 @@ readChannel:
 	}
 }
 
-func produce(values []string) <-chan fstream.RangeBytes {
-	out := make(chan fstream.RangeBytes, 2)
+func produce(values []string) <-chan fstream.Chunk {
+	out := make(chan fstream.Chunk, 2)
 
 	go func() {
 		defer close(out)
 		for _, e := range values {
-			out <- fstream.RangeBytes{
-				Metadata: fstream.Metadata{},
-				Bytes:    []byte(e),
+			out <- fstream.Chunk{
+				Bytes:      []byte(e),
 			}
 		}
 	}()

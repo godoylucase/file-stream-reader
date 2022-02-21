@@ -26,11 +26,11 @@ type storageMock struct {
 	byteRangeFn     func(filename string, from, to int64, chunk []byte) error
 }
 
-func (s *storageMock) ContentLength(filename string) (int64, error) {
+func (s *storageMock) Length(filename string) (int64, error) {
 	return s.contentLengthFn(filename)
 }
 
-func (s *storageMock) ByteRange(filename string, from, to int64, chunk []byte) error {
+func (s *storageMock) Bytes(filename string, from, to int64, chunk []byte) error {
 	return s.byteRangeFn(filename, from, to, chunk)
 }
 
@@ -49,11 +49,11 @@ func Test_producer_Stream(t *testing.T) {
 		},
 	}
 	p := &strm{
-		conf: &Config{
-			Source:       src,
-			StreamersQty: 1,
-			BytesPerRead: 3,
-			Filename:     fName,
+		fsource: src,
+		conf: &WithConfig{
+			Streamers: 1,
+			ChunkSize: 3,
+			Filename:  fName,
 		},
 	}
 
@@ -74,9 +74,9 @@ func Test_producer_Stream(t *testing.T) {
 
 func Test_streamOddRanges(t *testing.T) {
 	count := 0
-	for value := range ranges("any", int64(len(odd)), bpr,1) {
+	for value := range chunkRanges("any", int64(len(odd)), bpr) {
 		if count == 2 {
-			assert.True(t, value.From+1 == value.To)
+			assert.True(t, value.from+1 == value.to)
 		}
 		count++
 	}
@@ -86,7 +86,7 @@ func Test_streamOddRanges(t *testing.T) {
 
 func Test_streamEvenRanges(t *testing.T) {
 	count := 0
-	for value := range ranges("any", int64(len(even)), bpr, 1) {
+	for value := range chunkRanges("any", int64(len(even)), bpr) {
 		fmt.Printf("+%v\n", value)
 		count++
 	}

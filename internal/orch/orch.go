@@ -3,12 +3,11 @@ package orch
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/godoylucase/s3-file-stream-reader/internal/fstream"
 	"github.com/godoylucase/s3-file-stream-reader/internal/sread"
-	"github.com/godoylucase/s3-file-stream-reader/platform/awss3"	
+	"github.com/godoylucase/s3-file-stream-reader/platform/awss3"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -18,31 +17,40 @@ const (
 )
 
 type streamer interface {
-	Start(ctx context.Context) <-chan fstream.RangeBytes
+	Start(ctx context.Context) <-chan fstream.Chunk
 }
 
 type reader interface {
-	Process(ctx context.Context, stream <-chan fstream.RangeBytes) <-chan sread.Data
+	Process(ctx context.Context, stream <-chan fstream.Chunk) <-chan sread.Data
 }
-type Orch struct {
+
+type orchestrator struct {
 	streamer streamer
 	reader   reader
 }
 
 type Config struct {
-	Type             string                 `mapstructure:"type"`
-	ChunkByteSize    string                 `mapstructure:"chunk-size"`
-	OnReadFnName     string                 `mapstructure:"reader-fn"`
-	StreamersQty     string                 `mapstructure:"streamers"`
-	ReadersQty       string                 `mapstructure:"readers"`
-	LocationMetadata map[string]interface{} `mapstructure:",remain"`
+	Type       string
+	StreamConf *StreamConf
+	ReadConf   *ReadConf
+}
+
+type StreamConf struct {
+	ChunkSize        int64
+	Qty              uint
+	LocationMetadata map[string]interface{}
+}
+
+type ReadConf struct {
+	Qty          uint
+	OnReadFnName string
 }
 
 func (conf *Config) filename() (string, error) {
 	switch conf.Type {
 	case TypeBucket:
 		var loc S3Location
-		if err := mapstructure.Decode(conf.LocationMetadata, &loc); err != nil {
+		if err := mapstructure.Decode(conf.StreamConf.LocationMetadata, &loc); err != nil {
 			return "", err
 		}
 		return strings.Join([]string{loc.Bucket, loc.Key}, "/"), nil
@@ -58,7 +66,7 @@ type S3Location struct {
 	Key    string `mapstructure:"key"`
 }
 
-func FromConfig(conf *Config) (*Orch, error) {
+func FromConfig(conf *Config) (*orchestrator, error) {
 	filename, err := conf.filename()
 	if err != nil {
 		return nil, err
@@ -69,46 +77,32 @@ func FromConfig(conf *Config) (*Orch, error) {
 		return nil, err
 	}
 
-	sqty, err := strconv.Atoi(conf.StreamersQty)
-	if err != nil {
-		return nil, err
-	}
+	s := fstream.New(
+		src,
+		&fstream.WithConfig{
+			Streamers: conf.StreamConf.Qty,
+			ChunkSize: conf.StreamConf.ChunkSize,
+			Filename:  filename,
+		})
 
-	cbs, err := strconv.Atoi(conf.ChunkByteSize)
-	if err != nil {
-		return nil, err
-	}
+	r := sread.New(
+		&sread.WithConfig{
+			ReadersQty:   conf.ReadConf.Qty,
+			OnReadFnName: conf.ReadConf.OnReadFnName,
+		})
 
-	s := fstream.New(&fstream.Config{
-		Source:       src,
-		StreamersQty: uint(sqty),
-		BytesPerRead: int64(cbs),
-		Filename:     filename,
-	})
-
-	rqty, err := strconv.Atoi(conf.ReadersQty)
-	if err != nil {
-		return nil, err
-	}
-
-	r := sread.New(&sread.Config{
-		ReadersQty:   uint(rqty),
-		OnReadFnName: conf.OnReadFnName,
-	})
-
-	return &Orch{
+	return &orchestrator{
 		streamer: s,
 		reader:   r,
 	}, nil
 }
 
-func (o *Orch) Run(ctx context.Context) <-chan sread.Data {
-	strm := o.streamer.Start(ctx)
-	return o.reader.Process(ctx, strm)
+func (o *orchestrator) Run(ctx context.Context) <-chan sread.Data {
+	return o.reader.Process(ctx, o.streamer.Start(ctx))
 }
 
-func source(typ string) (fstream.Source, error) {
-	var src fstream.Source
+func source(typ string) (fstream.FileSource, error) {
+	var src fstream.FileSource
 	switch typ {
 	case TypeBucket:
 		s, err := awss3.NewProxy()

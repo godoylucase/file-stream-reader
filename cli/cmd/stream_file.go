@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/godoylucase/s3-file-stream-reader/internal/orch"
 	"github.com/mitchellh/mapstructure"
@@ -11,6 +12,15 @@ import (
 
 // streamFileCmd represents the streamFile command
 var streamFileCmd = streamFile()
+
+type arguments struct {
+	Type             string                 `mapstructure:"type"`
+	ChunkByteSize    string                 `mapstructure:"chunk-size"`
+	OnReadFnName     string                 `mapstructure:"reader-fn"`
+	StreamersQty     string                 `mapstructure:"streamers"`
+	ReadersQty       string                 `mapstructure:"readers"`
+	LocationMetadata map[string]interface{} `mapstructure:",remain"`
+}
 
 func streamFile() *cobra.Command {
 	return &cobra.Command{
@@ -25,13 +35,41 @@ func commandFn() func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithCancel(cmd.Context())
 		defer cancel()
 
-		var sfargs orch.Config
+		var sfargs arguments
 		if err := mapstructure.Decode(argsMap(args), &sfargs); err != nil {
 			fmt.Println(err)
 			return
 		}
 
-		or, err := orch.FromConfig(&sfargs)
+		sqty, err := strconv.Atoi(sfargs.StreamersQty)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		rqty, err := strconv.Atoi(sfargs.ReadersQty)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		cbs, err := strconv.Atoi(sfargs.ChunkByteSize)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		or, err := orch.FromConfig(&orch.Config{
+			Type: sfargs.Type,
+			StreamConf: &orch.StreamConf{
+				ChunkSize:        int64(cbs),
+				Qty:              uint(sqty),
+				LocationMetadata: sfargs.LocationMetadata,
+			},
+			ReadConf: &orch.ReadConf{
+				Qty:          uint(rqty),
+				OnReadFnName: sfargs.OnReadFnName},
+		})
 		if err != nil {
 			fmt.Println(err)
 		}

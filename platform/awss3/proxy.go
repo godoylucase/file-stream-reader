@@ -14,7 +14,7 @@ type s3Proxy struct {
 	client *s3.S3
 }
 
-func NewProxy() (fstream.Source, error) {
+func NewProxy() (fstream.FileSource, error) {
 	client, err := Client()
 	if err != nil {
 		return nil, err
@@ -23,7 +23,7 @@ func NewProxy() (fstream.Source, error) {
 	return &s3Proxy{client: client}, nil
 }
 
-func (s *s3Proxy) ContentLength(filename string) (int64, error) {
+func (s *s3Proxy) Length(filename string) (int64, error) {
 	bucket, key := s.bucketKeyValues(filename)
 
 	head, err := s.client.HeadObject(&s3.HeadObjectInput{
@@ -37,7 +37,7 @@ func (s *s3Proxy) ContentLength(filename string) (int64, error) {
 	return *head.ContentLength, nil
 }
 
-func (s *s3Proxy) ByteRange(filename string, from, to int64, chunk []byte) error {
+func (s *s3Proxy) Bytes(filename string, from, to int64, chunk []byte) error {
 	bucket, key := s.bucketKeyValues(filename)
 	byteRange := fmt.Sprintf("bytes=%v-%v", from, to)
 

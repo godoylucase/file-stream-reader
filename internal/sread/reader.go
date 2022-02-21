@@ -33,10 +33,10 @@ func OnReadFn(name string) (OnStreamRead, error) {
 }
 
 type rdr struct {
-	conf *Config
+	conf *WithConfig
 }
 
-type Config struct {
+type WithConfig struct {
 	ReadersQty   uint
 	OnReadFnName string
 }
@@ -46,21 +46,21 @@ type Data struct {
 	Err     error
 }
 
-func New(cfg *Config) *rdr {
+func New(conf *WithConfig) *rdr {
 	return &rdr{
-		conf: cfg,
+		conf: conf,
 	}
 }
 
-func (r *rdr) Process(ctx context.Context, stream <-chan fstream.RangeBytes) <-chan Data {
-	results := make(chan Data, r.conf.ReadersQty)
+func (r *rdr) Process(ctx context.Context, stream <-chan fstream.Chunk) <-chan Data {
+	data := make(chan Data, r.conf.ReadersQty)
 
 	go func() {
-		defer close(results)
+		defer close(data)
 
 		onReadFn, err := OnReadFn(r.conf.OnReadFnName)
 		if err != nil {
-			results <- Data{
+			data <- Data{
 				Err: err,
 			}
 			return
@@ -80,24 +80,24 @@ func (r *rdr) Process(ctx context.Context, stream <-chan fstream.RangeBytes) <-c
 						}
 
 						if s.Err != nil {
-							results <- Data{
+							data <- Data{
 								Err: s.Err,
 							}
 							return
 						}
 
-						parsed, err := onReadFn(s.Bytes)
+						result, err := onReadFn(s.Bytes)
 						if err != nil {
-							results <- Data{
+							data <- Data{
 								Err: err,
 							}
 							return
 						}
 
-						results <- Data{Content: parsed}
+						data <- Data{Content: result}
 					case <-ctx.Done():
 						fmt.Printf("cancelled context: %v\n", ctx.Err())
-						results <- Data{Err: ctx.Err()}
+						data <- Data{Err: ctx.Err()}
 						return
 					}
 				}
@@ -106,5 +106,5 @@ func (r *rdr) Process(ctx context.Context, stream <-chan fstream.RangeBytes) <-c
 		wg.Wait()
 	}()
 
-	return results
+	return data
 }
