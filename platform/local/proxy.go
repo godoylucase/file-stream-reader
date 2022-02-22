@@ -26,7 +26,7 @@ func (l *localProxy) Length(filename string) (int64, error) {
 	return stat.Size(), nil
 }
 
-func (l *localProxy) Bytes(filename string, from int64, to int64, chunk []byte) error {
+func (l *localProxy) Bytes(filename string, from int64, chunk []byte) error {
 	file, err := os.Open(filename)
 	if err != nil {
 		return err

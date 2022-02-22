@@ -23,15 +23,15 @@ const (
 
 type storageMock struct {
 	contentLengthFn func(filename string) (int64, error)
-	byteRangeFn     func(filename string, from, to int64, chunk []byte) error
+	byteRangeFn     func(filename string, from int64, chunk []byte) error
 }
 
 func (s *storageMock) Length(filename string) (int64, error) {
 	return s.contentLengthFn(filename)
 }
 
-func (s *storageMock) Bytes(filename string, from, to int64, chunk []byte) error {
-	return s.byteRangeFn(filename, from, to, chunk)
+func (s *storageMock) Bytes(filename string, from int64, chunk []byte) error {
+	return s.byteRangeFn(filename, from, chunk)
 }
 
 func Test_producer_Stream(t *testing.T) {
@@ -40,11 +40,11 @@ func Test_producer_Stream(t *testing.T) {
 			assert.Equal(t, fName, filename)
 			return int64(len(even)), nil
 		},
-		byteRangeFn: func(filename string, from, to int64, chunk []byte) error {
+		byteRangeFn: func(filename string, from int64, chunk []byte) error {
 			assert.Equal(t, fName, filename)
 			assert.NotEmpty(t, chunk)
 
-			_ = copy(chunk, even[from:to])
+			_ = copy(chunk, even[from:from+int64(len(chunk))])
 			return nil
 		},
 	}

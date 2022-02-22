@@ -7,7 +7,7 @@ import (
 
 type FileSource interface {
 	Length(filename string) (int64, error)
-	Bytes(filename string, from, to int64, chunk []byte) error
+	Bytes(filename string, from int64, chunk []byte) error
 }
 
 type metadata struct {
@@ -75,8 +75,8 @@ func (s *strm) Start(ctx context.Context) <-chan Chunk {
 							return
 						}
 
-						chunk := make([]byte, s.conf.ChunkSize)
-						if err := s.fsource.Bytes(filename, r.from, r.to, chunk); err != nil {
+						chunk := make([]byte, r.to - r.from)
+						if err := s.fsource.Bytes(filename, r.from, chunk); err != nil {
 							stream <- Chunk{
 								Filename: r.filename,
 								From:     r.from,
