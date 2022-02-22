@@ -30,7 +30,7 @@ func (s *storageMock) Length(filename string) (int64, error) {
 	return s.contentLengthFn(filename)
 }
 
-func (s *storageMock) Bytes(filename string, from int64, chunk []byte) error {
+func (s *storageMock) GetBytes(filename string, from int64, chunk []byte) error {
 	return s.byteRangeFn(filename, from, chunk)
 }
 

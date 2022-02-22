@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/godoylucase/s3-file-stream-reader/internal/fstream"
+	"github.com/godoylucase/s3-file-stream-reader/fstream"
 	"github.com/stretchr/testify/assert"
 )
 

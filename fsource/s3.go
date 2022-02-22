@@ -1,4 +1,4 @@
-package awss3
+package fsource
 
 import (
 	"fmt"
@@ -7,14 +7,13 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/godoylucase/s3-file-stream-reader/internal/fstream"
 )
 
 type s3Proxy struct {
 	client *s3.S3
 }
 
-func NewProxy() (fstream.FileSource, error) {
+func NewS3() (*s3Proxy, error) {
 	client, err := Client()
 	if err != nil {
 		return nil, err
@@ -37,7 +36,7 @@ func (s *s3Proxy) Length(filename string) (int64, error) {
 	return *head.ContentLength, nil
 }
 
-func (s *s3Proxy) Bytes(filename string, from int64, chunk []byte) error {
+func (s *s3Proxy) GetBytes(filename string, from int64, chunk []byte) error {
 	bucket, key := s.bucketKeyValues(filename)
 	byteRange := fmt.Sprintf("bytes=%v-%v", from, from+int64(len(chunk)))
 

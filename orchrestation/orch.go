@@ -1,14 +1,13 @@
-package orch
+package orchrestation
 
 import (
 	"context"
 	"fmt"
 	"strings"
 
-	"github.com/godoylucase/s3-file-stream-reader/internal/fstream"
-	"github.com/godoylucase/s3-file-stream-reader/internal/sread"
-	"github.com/godoylucase/s3-file-stream-reader/platform/awss3"
-	"github.com/godoylucase/s3-file-stream-reader/platform/local"
+	"github.com/godoylucase/s3-file-stream-reader/fsource"
+	"github.com/godoylucase/s3-file-stream-reader/fstream"
+	"github.com/godoylucase/s3-file-stream-reader/sread"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -81,7 +80,7 @@ func FromConfig(conf *Config) (*orchestrator, error) {
 		return nil, err
 	}
 
-	src, err := source(conf.Type)
+	src, err := fsource.Get(conf.Type)
 	if err != nil {
 		return nil, err
 	}
@@ -108,22 +107,4 @@ func FromConfig(conf *Config) (*orchestrator, error) {
 
 func (o *orchestrator) Run(ctx context.Context) <-chan sread.Data {
 	return o.reader.Process(ctx, o.streamer.Start(ctx))
-}
-
-func source(typ string) (fstream.FileSource, error) {
-	var src fstream.FileSource
-	switch typ {
-	case TypeBucket:
-		p, err := awss3.NewProxy()
-		if err != nil {
-			return nil, err
-		}
-		src = p
-	case TypeLocalFile:
-		src = local.NewProxy()
-	default:
-		fmt.Printf("the type %v is not supported", typ)
-	}
-
-	return src, nil
 }

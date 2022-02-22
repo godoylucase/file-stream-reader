@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/godoylucase/s3-file-stream-reader/internal/orch"
+	"github.com/godoylucase/s3-file-stream-reader/orchrestation"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 )
@@ -59,14 +59,14 @@ func commandFn() func(cmd *cobra.Command, args []string) {
 			return
 		}
 
-		or, err := orch.FromConfig(&orch.Config{
+		or, err := orchrestation.FromConfig(&orchrestation.Config{
 			Type: sfargs.Type,
-			StreamConf: &orch.StreamConf{
+			StreamConf: &orchrestation.StreamConf{
 				ChunkSize:        int64(cbs),
 				Qty:              uint(sqty),
 				LocationMetadata: sfargs.LocationMetadata,
 			},
-			ReadConf: &orch.ReadConf{
+			ReadConf: &orchrestation.ReadConf{
 				Qty:          uint(rqty),
 				OnReadFnName: sfargs.OnReadFnName},
 		})

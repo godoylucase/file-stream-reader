@@ -3,12 +3,9 @@ package fstream
 import (
 	"context"
 	"sync"
-)
 
-type FileSource interface {
-	Length(filename string) (int64, error)
-	Bytes(filename string, from int64, chunk []byte) error
-}
+	"github.com/godoylucase/s3-file-stream-reader/fsource"
+)
 
 type metadata struct {
 	filename string
@@ -31,11 +28,11 @@ type WithConfig struct {
 }
 
 type strm struct {
-	fsource FileSource
+	fsource fsource.FileSource
 	conf    *WithConfig
 }
 
-func New(fs FileSource, conf *WithConfig) *strm {
+func New(fs fsource.FileSource, conf *WithConfig) *strm {
 	return &strm{
 		fsource: fs,
 		conf:    conf,
@@ -76,7 +73,7 @@ func (s *strm) Start(ctx context.Context) <-chan Chunk {
 						}
 
 						chunk := make([]byte, r.to - r.from)
-						if err := s.fsource.Bytes(filename, r.from, chunk); err != nil {
+						if err := s.fsource.GetBytes(filename, r.from, chunk); err != nil {
 							stream <- Chunk{
 								Filename: r.filename,
 								From:     r.from,

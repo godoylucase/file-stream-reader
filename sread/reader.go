@@ -5,32 +5,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/godoylucase/s3-file-stream-reader/internal/fstream"
+	"github.com/godoylucase/s3-file-stream-reader/fstream"
 )
-
-var registry = sync.Map{}
-
-type OnStreamRead func([]byte) (interface{}, error)
-
-func RegisterFn(name string, fn func([]byte) (interface{}, error)) {
-	fmt.Printf("registering on read function with name: %+v\n", name)
-	registry.Store(name, fn)
-}
-
-func OnReadFn(name string) (OnStreamRead, error) {
-	load, ok := registry.Load(name)
-	fmt.Println(load)
-	if !ok {
-		return nil, fmt.Errorf("%v is not a valid on read function", name)
-	}
-
-	fn, ok := load.(func([]byte) (interface{}, error))
-	if !ok {
-		return nil, fmt.Errorf("%v is not a valid on read function", name)
-	}
-
-	return fn, nil
-}
 
 type rdr struct {
 	conf *WithConfig
@@ -58,7 +34,7 @@ func (r *rdr) Process(ctx context.Context, stream <-chan fstream.Chunk) <-chan D
 	go func() {
 		defer close(data)
 
-		onReadFn, err := OnReadFn(r.conf.OnReadFnName)
+		onReadFn, err := onReadFn(r.conf.OnReadFnName)
 		if err != nil {
 			data <- Data{
 				Err: err,

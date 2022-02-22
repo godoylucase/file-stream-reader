@@ -1,11 +1,11 @@
-package orch
+package orchrestation
 
 import (
 	"context"
 	"strconv"
 
-	"github.com/godoylucase/s3-file-stream-reader/internal/fstream"
-	"github.com/godoylucase/s3-file-stream-reader/internal/sread"
+	"github.com/godoylucase/s3-file-stream-reader/fstream"
+	"github.com/godoylucase/s3-file-stream-reader/sread"
 )
 
 type content struct {
