@@ -18,6 +18,7 @@ type WithConfig struct {
 }
 
 type Data struct {
+	// TODO include chunk metadata here
 	Content interface{}
 	Err     error
 }
@@ -36,8 +37,9 @@ func (r *rdr) Process(ctx context.Context, stream <-chan fstream.Chunk) <-chan D
 
 		onReadFn, err := onReadFn(r.conf.OnReadFnName)
 		if err != nil {
+			e := fmt.Errorf("invalid on read fn name [%v]: %w", r.conf.OnReadFnName, err)
 			data <- Data{
-				Err: err,
+				Err: e,
 			}
 			return
 		}
