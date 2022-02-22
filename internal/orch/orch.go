@@ -8,6 +8,7 @@ import (
 	"github.com/godoylucase/s3-file-stream-reader/internal/fstream"
 	"github.com/godoylucase/s3-file-stream-reader/internal/sread"
 	"github.com/godoylucase/s3-file-stream-reader/platform/awss3"
+	"github.com/godoylucase/s3-file-stream-reader/platform/local"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -55,7 +56,11 @@ func (conf *Config) filename() (string, error) {
 		}
 		return strings.Join([]string{loc.Bucket, loc.Key}, "/"), nil
 	case TypeLocalFile:
-		fallthrough
+		var loc LocalFileLocation
+		if err := mapstructure.Decode(conf.StreamConf.LocationMetadata, &loc); err != nil {
+			return "", err
+		}
+		return loc.Path, nil
 	default:
 		return "", fmt.Errorf("the %v value is not a supported type", conf.Type)
 	}
@@ -64,6 +69,10 @@ func (conf *Config) filename() (string, error) {
 type S3Location struct {
 	Bucket string `mapstructure:"bucket"`
 	Key    string `mapstructure:"key"`
+}
+
+type LocalFileLocation struct {
+	Path string `mapstructure:"path"`
 }
 
 func FromConfig(conf *Config) (*orchestrator, error) {
@@ -105,13 +114,13 @@ func source(typ string) (fstream.FileSource, error) {
 	var src fstream.FileSource
 	switch typ {
 	case TypeBucket:
-		s, err := awss3.NewProxy()
+		p, err := awss3.NewProxy()
 		if err != nil {
 			return nil, err
 		}
-		src = s
+		src = p
 	case TypeLocalFile:
-		fallthrough
+		src = local.NewProxy()
 	default:
 		fmt.Printf("the type %v is not supported", typ)
 	}

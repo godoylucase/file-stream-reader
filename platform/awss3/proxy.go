@@ -37,9 +37,9 @@ func (s *s3Proxy) Length(filename string) (int64, error) {
 	return *head.ContentLength, nil
 }
 
-func (s *s3Proxy) Bytes(filename string, from, to int64, chunk []byte) error {
+func (s *s3Proxy) Bytes(filename string, from int64, chunk []byte) error {
 	bucket, key := s.bucketKeyValues(filename)
-	byteRange := fmt.Sprintf("bytes=%v-%v", from, to)
+	byteRange := fmt.Sprintf("bytes=%v-%v", from, from+int64(len(chunk)))
 
 	object, err := s.client.GetObject(&s3.GetObjectInput{
 		Bucket: aws.String(bucket),
