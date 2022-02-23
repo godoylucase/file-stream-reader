@@ -17,10 +17,20 @@ type WithConfig struct {
 	OnReadFnName string
 }
 
+type Metadata struct {
+	Filename string
+	FromByte int64
+	ToByte   int64
+}
+
+func (m *Metadata) String() string {
+	return fmt.Sprintf("{Filename: %v FromByte: %v ToByte: %v}", m.Filename, m.FromByte, m.ToByte)
+}
+
 type Data struct {
-	// TODO include chunk metadata here
-	Content interface{}
-	Err     error
+	Content  interface{}
+	Metadata *Metadata
+	Err      error
 }
 
 func New(conf *WithConfig) *rdr {
@@ -57,9 +67,16 @@ func (r *rdr) Process(ctx context.Context, stream <-chan fstream.Chunk) <-chan D
 							return
 						}
 
+						meta := &Metadata{
+							Filename: s.Filename,
+							FromByte: s.From,
+							ToByte:   s.To,
+						}
+
 						if s.Err != nil {
 							data <- Data{
-								Err: s.Err,
+								Err:      s.Err,
+								Metadata: meta,
 							}
 							return
 						}
@@ -67,12 +84,16 @@ func (r *rdr) Process(ctx context.Context, stream <-chan fstream.Chunk) <-chan D
 						result, err := onReadFn(s.Bytes)
 						if err != nil {
 							data <- Data{
-								Err: err,
+								Err:      err,
+								Metadata: meta,
 							}
 							return
 						}
 
-						data <- Data{Content: result}
+						data <- Data{
+							Content:  result,
+							Metadata: meta,
+						}
 					case <-ctx.Done():
 						fmt.Printf("cancelled context: %v\n", ctx.Err())
 						data <- Data{Err: ctx.Err()}

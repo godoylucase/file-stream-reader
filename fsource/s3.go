@@ -13,7 +13,7 @@ type s3Proxy struct {
 	client *s3.S3
 }
 
-func NewS3() (*s3Proxy, error) {
+func newS3() (*s3Proxy, error) {
 	client, err := Client()
 	if err != nil {
 		return nil, err

@@ -17,7 +17,7 @@ type FileSource interface {
 func Get(typ string) (FileSource, error) {
 	switch typ {
 	case TypeBucket:
-		p, err := NewS3()
+		p, err := newS3()
 		if err != nil {
 			return nil, err
 		}
