@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	fsource3 "github.com/godoylucase/s3-file-stream-reader/internal/fsr/fsource"
+	fsource3 "github.com/godoylucase/file-stream-reader/internal/fsr/fsource"
 )
 
 type metadata struct {

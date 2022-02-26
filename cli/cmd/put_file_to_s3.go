@@ -7,7 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/godoylucase/s3-file-stream-reader/internal/platform"
+	"github.com/godoylucase/file-stream-reader/internal/platform"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 )

@@ -1,4 +1,4 @@
-module github.com/godoylucase/s3-file-stream-reader
+module github.com/godoylucase/file-stream-reader
 
 go 1.16
 

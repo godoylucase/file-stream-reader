@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/godoylucase/s3-file-stream-reader/internal/fsr/sread"
+	"github.com/godoylucase/file-stream-reader/internal/fsr/sread"
 )
 
 const (

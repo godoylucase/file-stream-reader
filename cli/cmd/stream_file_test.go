@@ -6,7 +6,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 
-	_ "github.com/godoylucase/s3-file-stream-reader/example"
+	_ "github.com/godoylucase/file-stream-reader/example"
 )
 
 func Test_commandFn(t *testing.T) {
