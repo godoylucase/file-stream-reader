@@ -1,4 +1,4 @@
-package fsource
+package platform
 
 import (
 	"fmt"

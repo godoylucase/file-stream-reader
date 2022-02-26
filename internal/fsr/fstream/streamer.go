@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/godoylucase/s3-file-stream-reader/fsource"
+	fsource3 "github.com/godoylucase/s3-file-stream-reader/internal/fsr/fsource"
 )
 
 type metadata struct {
@@ -28,11 +28,11 @@ type WithConfig struct {
 }
 
 type strm struct {
-	fsource fsource.FileSource
+	fsource fsource3.FileSource
 	conf    *WithConfig
 }
 
-func New(fs fsource.FileSource, conf *WithConfig) *strm {
+func New(fs fsource3.FileSource, conf *WithConfig) *strm {
 	return &strm{
 		fsource: fs,
 		conf:    conf,

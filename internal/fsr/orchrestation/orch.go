@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/godoylucase/s3-file-stream-reader/fsource"
-	"github.com/godoylucase/s3-file-stream-reader/fstream"
-	"github.com/godoylucase/s3-file-stream-reader/sread"
+	"github.com/godoylucase/s3-file-stream-reader/internal/fsr/fsource"
+	"github.com/godoylucase/s3-file-stream-reader/internal/fsr/fstream"
+	"github.com/godoylucase/s3-file-stream-reader/internal/fsr/sread"
 	"github.com/mitchellh/mapstructure"
 )
 

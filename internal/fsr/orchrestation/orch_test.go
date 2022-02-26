@@ -4,8 +4,8 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/godoylucase/s3-file-stream-reader/fstream"
-	"github.com/godoylucase/s3-file-stream-reader/sread"
+	"github.com/godoylucase/s3-file-stream-reader/internal/fsr/fstream"
+	"github.com/godoylucase/s3-file-stream-reader/internal/fsr/sread"
 )
 
 type content struct {

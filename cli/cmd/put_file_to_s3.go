@@ -7,7 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/godoylucase/s3-file-stream-reader/fsource"
+	"github.com/godoylucase/s3-file-stream-reader/internal/platform"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 )
@@ -30,7 +30,7 @@ var pushToS3Cmd = &cobra.Command{
 			return
 		}
 
-		s3cli, err := fsource.Client()
+		s3cli, err := platform.Client()
 		if err != nil {
 			fmt.Println(err)
 			return

@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/godoylucase/s3-file-stream-reader/internal/platform"
 )
 
 type s3Proxy struct {
@@ -14,7 +15,7 @@ type s3Proxy struct {
 }
 
 func newS3() (*s3Proxy, error) {
-	client, err := Client()
+	client, err := platform.Client()
 	if err != nil {
 		return nil, err
 	}

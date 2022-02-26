@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/godoylucase/s3-file-stream-reader/fstream"
+	"github.com/godoylucase/s3-file-stream-reader/internal/fsr/fstream"
 )
 
 type rdr struct {

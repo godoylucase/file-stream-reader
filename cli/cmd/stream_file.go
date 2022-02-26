@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/godoylucase/s3-file-stream-reader/orchrestation"
+	"github.com/godoylucase/s3-file-stream-reader/internal/fsr/orchrestation"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 )
